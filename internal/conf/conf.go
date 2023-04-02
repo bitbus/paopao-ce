@@ -19,11 +19,11 @@ var (
 	loggerMeiliSetting *LoggerMeiliSettingS
 	redisSetting       *RedisSettingS
 
+	PyroscopeSetting        *PyroscopeSettingS
 	DatabaseSetting         *DatabaseSetingS
 	MysqlSetting            *MySQLSettingS
 	PostgresSetting         *PostgresSettingS
 	Sqlite3Setting          *Sqlite3SettingS
-	ServerSetting           *HttpServerSettingS
 	WebServerSetting        *HttpServerSettingS
 	AdminServerSetting      *HttpServerSettingS
 	SpaceXServerSetting     *HttpServerSettingS
@@ -67,7 +67,6 @@ func setupSetting(suite []string, noDefault bool) error {
 
 	objects := map[string]any{
 		"App":               &AppSetting,
-		"Server":            &ServerSetting,
 		"WebServer":         &WebServerSetting,
 		"AdminServer":       &AdminServerSetting,
 		"SpaceXServer":      &SpaceXServerSetting,
@@ -81,6 +80,7 @@ func setupSetting(suite []string, noDefault bool) error {
 		"BigCacheIndex":     &BigCacheIndexSetting,
 		"Alipay":            &AlipaySetting,
 		"SmsJuhe":           &SmsJuheSetting,
+		"Pyroscope":         &PyroscopeSetting,
 		"Logger":            &loggerSetting,
 		"LoggerFile":        &loggerFileSetting,
 		"LoggerZinc":        &loggerZincSetting,
@@ -110,6 +110,7 @@ func setupSetting(suite []string, noDefault bool) error {
 	SimpleCacheIndexSetting.CheckTickDuration *= time.Second
 	SimpleCacheIndexSetting.ExpireTickDuration *= time.Second
 	BigCacheIndexSetting.ExpireInSecond *= time.Second
+	redisSetting.ConnWriteTimeout *= time.Second
 
 	Mutex = &sync.Mutex{}
 	return nil
@@ -153,8 +154,5 @@ func GetOssDomain() string {
 }
 
 func RunMode() string {
-	if !cfg.If("Deprecated:OldWeb") {
-		return ServerSetting.RunMode
-	}
 	return AppSetting.RunMode
 }

@@ -1,16 +1,21 @@
 ## Roadmap for paopao-ce
-[paopao-ce](https://github.com/rocboss/paopao-ce/tree/dev)/[paopao-plus](https://github.com/rocboss/paopao-ce/tree/r/paopao-plus)/[paopao-pro](https://github.com/rocboss/paopao-ce/tree/r/paopao-pro) features develop or optimize and bug fix  roadmap.
+[paopao-ce](https://github.com/rocboss/paopao-ce/tree/dev)/[paopao-ce-plus](https://github.com/rocboss/paopao-ce/tree/r/paopao-ce-plus)/[paopao-ce-pro](https://github.com/rocboss/paopao-ce/tree/r/paopao-ce-pro) features develop or optimize and bug fix  roadmap.
 
-### paopao-ce roadmap
+## paopao-ce roadmap
 #### v0.3.0
 * [ ] add `Followship` feature
+* [ ] add `Auth:Bcrypt` feature
+* [ ] add `Auth:MD5` feature (just for compatible)
+* [ ] add extend base ORM code for implement data logic base sqlx/sqlc
 * [ ] optimize media tweet submit logic
 * [ ] optimize search logic service
+* [x] remove `Deprecated:OldWeb` feature
 
 #### v0.2.0
 * [x] add `Friendship` feature
 * [x] add `Lightship` feature
 * [ ] add extend base ORM code for implement data logic base sqlx/sqlc
+* [x] add `Pyroscope` feature
 * [x] add new `Web` service
 * [x] add `Frontend:Web` feature
 * [x] add `Deprecated:OldWeb` feature
@@ -37,6 +42,7 @@
 * [ ] optimize topics service
 * [ ] optimize backend data logic service(optimize database CRUD operate)
 
+<<<<<<< HEAD
 ### paopao-plus roadmap
 #### v0.3.0
 * [ ] adapt for paopao-ce v0.3.0
@@ -44,3 +50,18 @@
 ### paopao-pro roadmap
 #### v0.3.0
 * [ ] adapt for paopao-ce v0.3.0
+=======
+## paopao-ce-plus roadmap
+#### paopao-ce-plus/v0.3.0
+* [ ] adapt for paopao-ce v0.3.0
+
+#### paopao-ce-plus/v0.2.0
+* [ ] adapt for paopao-ce v0.2.0
+
+## paopao-ce-pro roadmap
+#### paopao-ce-pro/v0.3.0
+* [ ] adapt for paopao-ce v0.3.0
+
+#### paopao-ce-pro/v0.2.0
+* [ ] adapt for paopao-ce v0.2.0
+>>>>>>> x/sqlc

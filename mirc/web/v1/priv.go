@@ -12,8 +12,8 @@ func init() {
 
 // Priv 私有授权的服务
 type Priv struct {
-	Chain Chain `mir:"-"`
-	Group Group `mir:"v1"`
+	Chain `mir:"-"`
+	Group `mir:"v1"`
 
 	// UploadAttachment 上传资源
 	UploadAttachment func(Post, web.UploadAttachmentReq) web.UploadAttachmentResp `mir:"/attachment"`
@@ -31,7 +31,7 @@ type Priv struct {
 	DeleteTweet func(Delete, web.DeleteTweetReq) `mir:"/post"`
 
 	// StarTweet 动态点赞操作
-	StarTweet func(Post, web.StarTweetReq) web.StarTweetResp `mir:"/post/start"`
+	StarTweet func(Post, web.StarTweetReq) web.StarTweetResp `mir:"/post/star"`
 
 	// CollectionTweet 动态收藏操作
 	CollectionTweet func(Post, web.CollectionTweetReq) web.CollectionTweetResp `mir:"/post/collection"`

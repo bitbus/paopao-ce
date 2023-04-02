@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pyroscope-io/client/pyroscope"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm/logger"
@@ -20,6 +21,13 @@ var files embed.FS
 
 type Setting struct {
 	vp *viper.Viper
+}
+
+type PyroscopeSettingS struct {
+	AppName   string
+	Endpoint  string
+	AuthToken string
+	Logger    string
 }
 
 type LoggerSettingS struct {
@@ -83,9 +91,10 @@ type SimpleCacheIndexSettingS struct {
 }
 
 type BigCacheIndexSettingS struct {
-	MaxIndexPage   int
-	ExpireInSecond time.Duration
-	Verbose        bool
+	MaxIndexPage     int
+	HardMaxCacheSize int
+	ExpireInSecond   time.Duration
+	Verbose          bool
 }
 
 type AlipaySettingS struct {
@@ -201,9 +210,11 @@ type LocalOSSSettingS struct {
 }
 
 type RedisSettingS struct {
-	Host     string
-	Password string
-	DB       int
+	InitAddress      []string
+	Username         string
+	Password         string
+	SelectDB         int
+	ConnWriteTimeout time.Duration
 }
 
 type JWTSettingS struct {
@@ -292,8 +303,18 @@ func (s *MySQLSettingS) Dsn() string {
 func (s PostgresSettingS) Dsn() string {
 	var params []string
 	for k, v := range s {
-		if len(v) > 0 {
-			params = append(params, strings.ToLower(k)+"="+v)
+		if len(v) == 0 {
+			continue
+		}
+		lk := strings.ToLower(k)
+		tv := strings.Trim(v, " ")
+		switch lk {
+		case "schema":
+			params = append(params, "search_path="+tv)
+		case "applicationname":
+			params = append(params, "application_name="+tv)
+		default:
+			params = append(params, lk+"="+tv)
 		}
 	}
 	return strings.Join(params, " ")
@@ -406,6 +427,16 @@ func (s *DatabaseSetingS) TableNames() (res TableNameMap) {
 	res = make(TableNameMap, len(tableNames))
 	for _, name := range tableNames {
 		res[name] = s.TablePrefix + name
+	}
+	return
+}
+
+func (s *PyroscopeSettingS) GetLogger() (logger pyroscope.Logger) {
+	switch strings.ToLower(s.Logger) {
+	case "standard":
+		logger = pyroscope.StandardLogger
+	case "logrus":
+		logger = logrus.StandardLogger()
 	}
 	return
 }

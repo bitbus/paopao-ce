@@ -14,11 +14,14 @@ import (
 )
 
 var (
-	_ core.DataService = (*dataServant)(nil)
-	_ core.VersionInfo = (*dataServant)(nil)
+	_ core.DataService = (*dataSrv)(nil)
+	_ core.VersionInfo = (*dataSrv)(nil)
+
+	_ core.WebDataServantA = (*webDataSrvA)(nil)
+	_ core.VersionInfo     = (*webDataSrvA)(nil)
 )
 
-type dataServant struct {
+type dataSrv struct {
 	core.IndexPostsService
 	core.WalletService
 	core.MessageService
@@ -32,6 +35,13 @@ type dataServant struct {
 	core.ContactManageService
 	core.SecurityService
 	core.AttachmentCheckService
+}
+
+type webDataSrvA struct {
+	core.TopicServantA
+	core.TweetServantA
+	core.TweetManageServantA
+	core.TweetHelpServantA
 }
 
 func NewDataService() (core.DataService, core.VersionInfo) {
@@ -70,7 +80,7 @@ func NewDataService() (core.DataService, core.VersionInfo) {
 	}
 	logrus.Infof("use %s as cache index service by version: %s", v.Name(), v.Version())
 
-	ds := &dataServant{
+	ds := &dataSrv{
 		IndexPostsService:      cis,
 		WalletService:          newWalletService(db),
 		MessageService:         newMessageService(db),
@@ -88,14 +98,27 @@ func NewDataService() (core.DataService, core.VersionInfo) {
 	return ds, ds
 }
 
+func NewWebDataServantA() (core.WebDataServantA, core.VersionInfo) {
+	logrus.Fatal("not support now")
+	return nil, nil
+}
+
 func NewAuthorizationManageService() core.AuthorizationManageService {
 	return newAuthorizationManageService(pgxDB())
 }
 
-func (s *dataServant) Name() string {
+func (s *dataSrv) Name() string {
 	return "sqlc/pgx"
 }
 
-func (s *dataServant) Version() *semver.Version {
+func (s *dataSrv) Version() *semver.Version {
+	return semver.MustParse("v0.1.0")
+}
+
+func (s *webDataSrvA) Name() string {
+	return "sqlc/pgx"
+}
+
+func (s *webDataSrvA) Version() *semver.Version {
 	return semver.MustParse("v0.1.0")
 }

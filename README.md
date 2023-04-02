@@ -65,7 +65,7 @@ PaoPao主要由以下优秀的开源项目/工具构建
 
 ### 环境要求
 
-* Go (1.18+)
+* Go (1.20+)
 * Node.js (14+)
 * MySQL (5.7+)
 * Redis
@@ -194,7 +194,10 @@ PaoPao主要由以下优秀的开源项目/工具构建
   docker build -t your/paopao-ce:tag --build-arg EMBED_UI=no .
 
   # 运行
-  docker run -d -p 8008:8008 -v ${PWD}/config.yaml.sample:/app/paopao-ce/config.yaml your/paopao-ce:tag
+  mkdir custom && docker run -d -p 8008:8008 -v ${PWD}/custom:/app/paopao-ce/custom -v ${PWD}/config.yaml.sample:/app/paopao-ce/config.yaml your/paopao-ce:tag
+
+  # 或者直接运行构建好的docker image
+  mkdir custom && docker run -d -p 8008:8008 -v ${PWD}/custom:/app/paopao-ce/custom -v ${PWD}/config.yaml.sample:/app/paopao-ce/config.yaml bitbus/paopao-ce:latest
   ```
 
   * 前端:
@@ -227,8 +230,7 @@ docker compose up --build
 # file: docker-compose.yaml
 ...
   backend:
-    build:
-      context: .
+    image: bitbus/paopao-ce:latest
     restart: always
     depends_on:
       - db
@@ -340,7 +342,6 @@ release/paopao-ce --no-default-features --features sqlite3,localoss,loggerfile,r
 |`Docs` | 子服务 | WIP | 开启开发者文档服务|
 |`Frontend:Web` | 子服务 | 稳定 | 开启独立前端服务|
 |`Frontend:EmbedWeb` | 子服务 | 稳定 | 开启内嵌于后端Web API服务中的前端服务|
-|`Deprecated:Web` | 子服务 | 稳定 | 开启旧的Web服务|
 |`Gorm` | 数据库 | 稳定(默认) | 使用[gorm](https://github.com/go-gorm/gorm)作为数据库的ORM，默认使用 `Gorm` + `MySQL`组合|
 |`Sqlx`| 数据库 | WIP | 使用[sqlx](https://github.com/jmoiron/sqlx)作为数据库的ORM|
 |`Sqlc`| 数据库 | WIP | 使用[sqlc](https://github.com/kyleconroy/sqlc)自动生成ORM代码|
@@ -370,6 +371,7 @@ release/paopao-ce --no-default-features --features sqlite3,localoss,loggerfile,r
 |`Alipay` | 支付 | 稳定 | 开启基于[支付宝开放平台](https://open.alipay.com/)的钱包功能 |
 |`Sms` | 短信验证 | 稳定 | 开启短信验证码功能，用于手机绑定验证手机是否注册者的；功能如果没有开启，手机绑定时任意短信验证码都可以绑定手机 |
 |`Docs:OpenAPI` | 开发文档 | 稳定 | 开启openapi文档功能，提供web api文档说明(visit http://127.0.0.1:8008/docs/openapi) |
+|[`Pyroscope`](docs/proposal/016-关于使用pyroscope用于性能调试的设计.md)| 性能优化 | 内测 | 开启Pyroscope功能用于性能调试 |   
 |`PhoneBind` | 其他 | 稳定 | 手机绑定功能 |   
 
 > 功能项状态详情参考 [features-status](features-status.md).
@@ -492,6 +494,32 @@ MinIO: # MinIO 存储配置
 ...
 ```
 
+#### [Pyroscope](https://github.com/pyroscope-io/pyroscope) 性能剖析
+* Pyroscope运行
+```sh
+mkdir -p data/minio/data
+
+# 使用Docker运行
+docker run -it -p 4040:4040 pyroscope/pyroscope:latest server
+# 使用docker compose运行， 需要删除docker-compose.yaml中关于pyroscope的注释
+docker compose up -d pyroscope
+# visit http://loclahost:4040
+```
+
+* 修改Pyroscope配置
+```yaml
+# features中加上 MinIO
+Features:
+  Default: ["Meili", "LoggerMeili", "Base", "Sqlite3", "BigCacheIndex", "Pyroscope"]
+...
+Pyroscope: # Pyroscope配置
+  AppName: "paopao-ce"
+  Endpoint: "http://localhost:4040"   # Pyroscope server address
+  AuthToken:                          # Pyroscope authentication token
+  Logger:  none                       # Pyroscope logger (standard | logrus | none)
+...
+```
+
 ### 源代码分支管理 
 **主代码库`github.com/rocboss/paopao-ce`**      
 ```bash
@@ -518,14 +546,15 @@ x/sqlx
 | `feature/*` | 子功能分支 |`feature/*`是新功能子分支，一般新功能子分支都是 *从`dev`开发分支fork出来的*；子功能分支 **只专注于该新功能** 代码的开发/优化，待开发接近内测阶段 *提交新功能PR给`dev`分支进行review/merge*，待新功能代码演进到`beta`分支后，原则上是可以删除该分支，但也可以保留到稳定版本发布。**该分支专注于新功能的开发，只接受新功能的bug修复/优化PR**。|
 | `jc/*` |维护者的开发分支|`jc/*`是代码库维护者的开发分支，一般包含一些局部优化或者bug修复代码，有时可以直接将代码merge到`dev/beta`分支，原则上不允许直接merge代码到`main`主分支。|
 | `x/*` |实验分支|`x/*`是技术实验分支，某些技术的引入需要经过具体的代码实现与真实场景的测评，考量评估后如果某项技术适合引入到paopao-ce，就fork出一个`feature/*`分支，作为新功能引入到paopao-ce。一般一些比较激进的技术，从`dev`分支fork出一个新的`x/*`分支，各种尝试、考量、评估后，或丢弃、或引入到paopao-ce。|   
+| `t/*` | 临时分支 |`t/*`是临时发版本分支，一般 `beta` 分支演进到正式版本发布前的最后某个beta版本（比如v0.2.0-beta)就从beta分支fork出一个 `t/*` 分支用于向 `main` 分支提交 PR 用于Review，待 PR Reviewed 合并到 `main` 分支后，可以删除这个临时创建的分支。这样设计主要是考虑到有时合并到 `main` 分支时，需要Review的时间可能会长一些，而dev分支的代码又急需推进到beta分支以发布下一个alpha版本用于内测，相当于为下一个测试版本发布腾地方。|  
 | `r/*` |发行版本分支|`r/*`是不同发行版本分支，不同发行版本各有不同的侧重点，可以根据需要选择适合的发行版本。|
 
 **发行版本分支说明**  
 | 名称 | 说明 | 维护者 | 备注 |
 | ----- | ----- | ----- | ----- |   
 |[`paopao-ce`](https://github.com/rocboss/paopao-ce/tree/dev)|paopao-ce 主发行版本|[ROC](https://github.com/rocboss 'ROC')|该分支 [数据逻辑层](https://github.com/rocboss/paopao-ce/tree/dev/internal/dao/jinzhu) 使用[gorm](https://github.com/go-gorm/gorm)作为数据逻辑层的ORM框架，适配MySQL/PostgreSQL/Sqlite3数据库。| 
-|[`r/paopao-plus`](https://github.com/rocboss/paopao-ce/tree/r/paopao-plus)|paopao-plus 发行版本|[北野](https://github.com/alimy 'Michael Li')|该分支 [数据逻辑层](https://github.com/rocboss/paopao-ce/tree/r/paopao-plus/internal/dao/sakila) 使用[sqlx](https://github.com/jmoiron/sqlx)作为数据逻辑层的ORM框架，专注于为MySQL/PostgreSQL/Sqlite3使用更优化的查询语句以提升数据检索效率。建议熟悉[sqlx](https://github.com/jmoiron/sqlx)的开发人员可以基于此版本来做 二次开发。|
-|[`r/paopao-pro`](https://github.com/rocboss/paopao-ce/tree/r/paopao-pro)|paopao-pro 发行版本|[北野](https://github.com/alimy 'Michael Li')|该分支 [数据逻辑层](https://github.com/rocboss/paopao-ce/tree/r/paopao-pro/internal/dao/slonik) 使用[sqlc](https://github.com/kyleconroy/sqlc)作为sql语句生成器自动生成ORM代码，专门针对特定数据库MySQL/PostgreSQL进行查询优化，熟悉[sqlc](https://github.com/kyleconroy/sqlc)的开发人员可以基于此版本来做 二次开发。(另：分支目前只使用[pgx-v5](https://github.com/jackc/pgx)适配了PostgreSQL数据库，后续或许会适配MySQL/TiDB数据库。)|
+|[`r/paopao-ce-plus`](https://github.com/rocboss/paopao-ce/tree/r/paopao-ce-plus)|paopao-ce-plus 发行版本|[北野](https://github.com/alimy 'Michael Li')|该分支 [数据逻辑层](https://github.com/rocboss/paopao-ce/tree/r/paopao-ce-plus/internal/dao/sakila) 使用[sqlx](https://github.com/jmoiron/sqlx)作为数据逻辑层的ORM框架，专注于为MySQL/PostgreSQL/Sqlite3使用更优化的查询语句以提升数据检索效率。建议熟悉[sqlx](https://github.com/jmoiron/sqlx)的开发人员可以基于此版本来做 二次开发。|
+|[`r/paopao-ce-pro`](https://github.com/rocboss/paopao-ce/tree/r/paopao-ce-pro)|paopao-ce-pro 发行版本|[北野](https://github.com/alimy 'Michael Li')|该分支 [数据逻辑层](https://github.com/rocboss/paopao-ce/tree/r/paopao-ce-pro/internal/dao/slonik) 使用[sqlc](https://github.com/kyleconroy/sqlc)作为sql语句生成器自动生成ORM代码，专门针对特定数据库MySQL/PostgreSQL进行查询优化，熟悉[sqlc](https://github.com/kyleconroy/sqlc)的开发人员可以基于此版本来做 二次开发。(另：分支目前只使用[pgx-v5](https://github.com/jackc/pgx)适配了PostgreSQL数据库，后续或许会适配MySQL/TiDB数据库。)|
 
 **代码分支演进图**        
 ![](docs/proposal/.assets/000-01.png)

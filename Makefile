@@ -10,7 +10,7 @@ CGO_ENABLED := 1
 endif
 
 RELEASE_ROOT = release
-RELEASE_FILES = LICENSE README.md config.yaml.sample scripts configs
+RELEASE_FILES = LICENSE README.md CHANGELOG.md config.yaml.sample docker-compose.yaml scripts docs
 RELEASE_LINUX_AMD64 = $(RELEASE_ROOT)/linux-amd64/$(TARGET)
 RELEASE_DARWIN_AMD64 = $(RELEASE_ROOT)/darwin-amd64/$(TARGET)
 RELEASE_DARWIN_ARM64 = $(RELEASE_ROOT)/darwin-arm64/$(TARGET)
@@ -24,7 +24,7 @@ TAGS = ""
 MOD_NAME = github.com/rocboss/paopao-ce
 LDFLAGS = -X "${MOD_NAME}/pkg/debug.version=${BUILD_VERSION}" \
           -X "${MOD_NAME}/pkg/debug.buildDate=${BUILD_DATE}" \
-		  -X "${MOD_NAME}/pkg/debug.commitID=${SHA_SHORT}" -w -s
+          -X "${MOD_NAME}/pkg/debug.commitID=${SHA_SHORT}" -w -s
 
 all: fmt build
 
@@ -84,9 +84,9 @@ gen-grpc:
 
 .PHONY: gen-sqlc
 gen-sqlc:
-	@find internal/dao/slonik/ce/postgres -name '*.go' -exec rm -f {} +
-	@go generate internal/dao/slonik/ce/gen.go
-	@go fmt ./internal/dao/slonik/ce/...
+	@find internal/dao/slonik/sqlc/postgres -name '*.go' -exec rm -f {} +
+	@go generate internal/dao/slonik/sqlc/gen.go
+	@go fmt ./internal/dao/slonik/sqlc/...
 
 .PHONY: proto-mod
 proto-mod:
@@ -119,9 +119,9 @@ install-plugins: install-protobuf-plugins
 
 .PHONY: install-protobuf-plugins
 install-protobuf-plugins:
-	@go install github.com/bufbuild/buf/cmd/buf@v1.11.0
-	@go install github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking@v1.11.0
-	@go install github.com/bufbuild/buf/cmd/protoc-gen-buf-lint@v1.11.0
+	@go install github.com/bufbuild/buf/cmd/buf@v1.15.1
+	@go install github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking@v1.15.1
+	@go install github.com/bufbuild/buf/cmd/protoc-gen-buf-lint@v1.15.1
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 

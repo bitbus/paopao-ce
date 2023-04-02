@@ -12,25 +12,24 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/rocboss/paopao-ce/internal/core"
 	"github.com/rocboss/paopao-ce/internal/core/cs"
-	dbr "github.com/rocboss/paopao-ce/internal/dao/slonik/ce/postgres"
-	"github.com/rocboss/paopao-ce/pkg/types"
+	dbr "github.com/rocboss/paopao-ce/internal/dao/slonik/sqlc/postgres"
 )
 
 var (
-	_ core.TopicService = (*topicServant)(nil)
+	_ core.TopicService = (*topicSrv)(nil)
 )
 
-type topicServant struct {
-	*pgxServant
+type topicSrv struct {
+	*pgxSrv
 }
 
 // UpsertTags update/insert tags info.
 // Assume tags slice is distinct elements.
-func (s *topicServant) UpsertTags(userId int64, tags []string) (res cs.TagInfoList, err error) {
+func (s *topicSrv) UpsertTags(userId int64, tags []string) (res cs.TagInfoList, err error) {
 	err = s.with(func(c context.Context, q dbr.Querier) error {
 		now := time.Now().Unix()
 		upTags, err := q.IncrTags(c, &dbr.IncrTagsParams{
-			Tags:       types.PgxArray(tags),
+			Tags:       tags,
 			ModifiedOn: now,
 		})
 		if err != nil {
@@ -75,18 +74,18 @@ func (s *topicServant) UpsertTags(userId int64, tags []string) (res cs.TagInfoLi
 	return
 }
 
-func (s *topicServant) DecrTagsById(ids []int64) error {
+func (s *topicSrv) DecrTagsById(ids []int64) error {
 	return s.q.DecrTagsById(context.Background(), &dbr.DecrTagsByIdParams{
-		Ids:        types.PgxArray(ids),
+		Ids:        ids,
 		ModifiedOn: time.Now().Unix(),
 	})
 }
 
-func (s *topicServant) ListTags(typ cs.TagType, offset int, limit int) (res cs.TagList, _ error) {
+func (s *topicSrv) ListTags(typ cs.TagType, limit int, offset int) (res cs.TagList, _ error) {
 	ctx := context.Background()
 	switch typ {
 	case cs.TagTypeHot:
-		tags, err := s.q.HotTags(ctx, &dbr.HotTagsParams{Offset: int32(offset), Limit: int32(limit)})
+		tags, err := s.q.HotTags(ctx, &dbr.HotTagsParams{Limit: int32(limit), Offset: int32(offset)})
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +106,7 @@ func (s *topicServant) ListTags(typ cs.TagType, offset int, limit int) (res cs.T
 			})
 		}
 	case cs.TagTypeNew:
-		tags, err := s.q.NewestTags(ctx, &dbr.NewestTagsParams{Offset: int32(offset), Limit: int32(limit)})
+		tags, err := s.q.NewestTags(ctx, &dbr.NewestTagsParams{Limit: int32(limit), Offset: int32(offset)})
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +130,7 @@ func (s *topicServant) ListTags(typ cs.TagType, offset int, limit int) (res cs.T
 	return
 }
 
-func (s *topicServant) TagsByKeyword(keyword string) (res cs.TagInfoList, _ error) {
+func (s *topicSrv) TagsByKeyword(keyword string) (res cs.TagInfoList, _ error) {
 	ctx := context.Background()
 	keyword = "%" + strings.Trim(keyword, " ") + "%"
 	if keyword == "%%" {
@@ -165,7 +164,7 @@ func (s *topicServant) TagsByKeyword(keyword string) (res cs.TagInfoList, _ erro
 }
 
 func newTopicService(db *pgx.Conn) core.TopicService {
-	return &topicServant{
-		pgxServant: newPgxServant(db),
+	return &topicSrv{
+		pgxSrv: newPgxSrv(db),
 	}
 }
